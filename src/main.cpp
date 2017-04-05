@@ -35,21 +35,32 @@ void transformationsExercise()
     std::cout << translationMat << separator << std::endl;
 
     // Scale Matrix
-    //(...)
-    //std::cout << "The content of matrix scaleMatrix is: \n" << std::endl;
-    //std::cout << scaleMatrix << separator << std::endl;
+	double scaleX, scaleY, scaleZ;
+	scaleX = 2; scaleY = 1; scaleZ = -1;
+	Vector3D scale(scaleX, scaleY, scaleZ);
+	Matrix4x4 scaleMatrix = Matrix4x4::scale(scale);
+    std::cout << "The content of matrix scaleMatrix is: \n" << std::endl;
+    std::cout << scaleMatrix << separator << std::endl;
 
     // Rotate around X Matrix
     double angleInDegrees = 60;
     double thetaInRadians = Utils::degreesToRadians(angleInDegrees);
-    //(...)
-    //std::cout << "The content of matrix rotateXMatrix is: \n" << std::endl;
-    //std::cout << rotateXMatrix << separator << std::endl;
+	double rotateX, rotateY, rotateZ;
+	rotateX = 1; rotateY = 0; rotateZ = 0;
+	Vector3D rotate(rotateX, rotateY, rotateZ);
+	Matrix4x4 rotateXMatrix = Matrix4x4::rotate(thetaInRadians, rotate);
+    std::cout << "The content of matrix rotateXMatrix is: \n" << std::endl;
+    std::cout << rotateXMatrix << separator << std::endl;
 
     // Rotate around an arbitrary axis Matrix
-    //(...)
-    //std::cout << "The content of matrix rotateArtitraryAxisMatrix is: \n" << std::endl;
-    //std::cout << rotateArtitraryAxisMatrix << separator << std::endl;
+	double angleInDegrees2 = 30;
+	double thetaInRadians2 = Utils::degreesToRadians(angleInDegrees2);
+	double rotateArbitraryX, rotateArbitraryY, rotateArbitraryZ;
+	rotateArbitraryX = 1; rotateArbitraryY = 1; rotateArbitraryZ = 1;
+	Vector3D rotateArbitrary(rotateArbitraryX, rotateArbitraryY, rotateArbitraryZ);
+	Matrix4x4 rotateArtitraryAxisMatrix = Matrix4x4::rotate(thetaInRadians2, rotateArbitrary);
+    std::cout << "The content of matrix rotateArtitraryAxisMatrix is: \n" << std::endl;
+    std::cout << rotateArtitraryAxisMatrix << separator << std::endl;
 
     // Transposed and Inversion
     std::cout << separatorStar << "Inverting and Transposing a Matrix" << separatorStar << std::endl;
@@ -59,21 +70,21 @@ void transformationsExercise()
               << translationMatTransposed << separator << std::endl;
 
     Matrix4x4 inverseTranslationMat;
-    //(...)
-    //std::cout << "The inverse of matrix \n\n" << translationMat << "\n is \n\n" << inverseTranslationMat << std::endl;
-    //std::cout << "And their multiplication should thus give the identity matrix:\n\n";
-    // (...)
+	translationMat.inverse(inverseTranslationMat);
+    std::cout << "The inverse of matrix \n\n" << translationMat << "\n is \n\n" << inverseTranslationMat << std::endl;
+    std::cout << "And their multiplication should thus give the identity matrix:\n\n";
+	std::cout << translationMat * inverseTranslationMat << std::endl;
 
     // Combine here some transforms, and visualize the result
     std::cout << separatorStar << "Combine transforms and visualize the result" << separatorStar << std::endl;
 
-    //Matrix4x4 scaleTranslate = (...);
-    //std::cout << "The content of matrix scaleTranslate is: \n" << std::endl;
-    //std::cout << scaleTranslate << separator << std::endl;
+    Matrix4x4 scaleTranslate = scaleMatrix * translationMat;
+    std::cout << "The content of matrix scaleTranslate is: \n" << std::endl;
+    std::cout << scaleTranslate << separator << std::endl;
 
-    //Matrix4x4 translateScale = (...);
-    //std::cout << "The content of matrix translateScale is: \n" << std::endl;
-    //std::cout << translateScale << separator << std::endl;
+    Matrix4x4 translateScale = translationMat * scaleMatrix;
+    std::cout << "The content of matrix translateScale is: \n" << std::endl;
+    std::cout << translateScale << separator << std::endl;
 }
 
 void normalTransformExercise()
@@ -220,7 +231,7 @@ int main()
     std::cout << separator << "RTIS - Ray Tracer for \"Imatge Sintetica\"" << separator << std::endl;
 
     // ASSIGNMENT 1
-    //transformationsExercise();
+    transformationsExercise();
     //normalTransformExercise();
     //paintingAnImageExercise();
     //filteringAnImageExercise();
