@@ -138,50 +138,77 @@ void paintingAnImageExercise()
         {
             for(unsigned int row = 0; row < resY; row++)
             {
-                Vector3D color(255, 0, 0);
+                Vector3D color(((col+0.5)/resX), ((row+0.5)/resY), 0);
                 film.setPixelValue(col, row, color);
             }
         }
 
     // Save the final result to file
-    film.save();
+    film.save("./paintingAnImage.bmp");
 }
 
 void filteringAnImageExercise()
 {
-    // Create two instances of the film class with the same resolution
-    int resX, resY;
-    resX = 512;
-    resY = 512;
-    Film f1(resX, resY);
-    Film f2(resX, resY);
+	// Create two instances of the film class with the same resolution
+	int resX, resY;
+	resX = 512;
+	resY = 512;
+	Film f1(resX, resY);
+	Film f2(resX, resY);
 
-    // Create the original image
-    //  Draw a circle centered at centerX, centerY (in pixels, image space)
-    //   and with ray r (also in pixels)
-    int centerX = resX / 2;
-    int centerY = resY / 2;
-    int r = std::min(centerX, centerY)/2;
-    for(int lin=0; lin<resX; lin++)
-    {
-        for(int col=0; col<resY; col++)
-        {
-            // Use the equation of the sphere to determine the pixel color
-            if( (lin-centerX)*(lin-centerX) + (col-centerY)*(col-centerY) < r*r )
-                f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
-        }
-    }
+	Film *image1 = &f1;
+	Film *image2 = &f2;
 
-    // Filter-related variables
-    // Declare here your filter-related variables
-    // (e.g., FILTER SIZE)
-    //(...)
+	// Create the original image
+	//  Draw a circle centered at centerX, centerY (in pixels, image space)
+	//   and with ray r (also in pixels)
+	int centerX = resX / 2;
+	int centerY = resY / 2;
+	int r = std::min(centerX, centerY) / 2;
+	for (int lin = 0; lin < resX; lin++)
+	{
+		for (int col = 0; col < resY; col++)
+		{
+			// Use the equation of the sphere to determine the pixel color
+			if ((lin - centerX)*(lin - centerX) + (col - centerY)*(col - centerY) < r*r)
+				f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
+		}
+	}
 
-    // Implement here your image filtering algorithm
-    //(...)
-
+	f1.save("./burred_original.bmp");
+	// Filter-related variables
+	// Declare here your filter-related variables
+	// (e.g., FILTER SIZE)
+	int iteraciones = 100;
+	int fSize = 3;
+	int radius = (fSize - 1) / 2;
+	Vector3D currentPixel = (0,0,0);
+	
+	// Implement here your image filtering algorithm
+	for (int it = 0; it < iteraciones; it++) {
+		for (int lin = 0; lin < resX; lin++)
+		{
+			for (int col = 0; col < resY; col++)
+			{
+				if (lin > 0 && lin < resX-1 && col > 0 && col < resY-1) {
+					for (int x = lin - radius; x <= lin + radius; x++) {
+						for (int y = col - 1; y < col + 2; y++) {
+							currentPixel += image1->getPixelValue(x, y)/9.0;
+						}
+					}
+				}
+				image2->setPixelValue(col, lin, currentPixel);
+				currentPixel = (0, 0, 0);
+			}
+		}
+		Film *aux;
+		aux = image1;
+		image1 = image2;
+		image2 = aux;
+	}
+    
     // DO NOT FORGET TO SAVE YOUR IMAGE!
-    //(...)
+	image1->save("./burred_filter.bmp");
 }
 
 void completeSphereClassExercise()
@@ -247,8 +274,8 @@ int main()
     // ASSIGNMENT 1
     transformationsExercise();
     normalTransformExercise();
-    //paintingAnImageExercise();
-    //filteringAnImageExercise();
+    paintingAnImageExercise();
+    filteringAnImageExercise();
 
     // ASSIGNMENT 2
     //eqSolverExercise();
