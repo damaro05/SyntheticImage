@@ -73,7 +73,7 @@ void transformationsExercise()
 	translationMat.inverse(inverseTranslationMat);
     std::cout << "The inverse of matrix \n\n" << translationMat << "\n is \n\n" << inverseTranslationMat << std::endl;
     std::cout << "And their multiplication should thus give the identity matrix:\n\n";
-	std::cout << translationMat * inverseTranslationMat << std::endl;
+	std::cout << translationMat * inverseTranslationMat << separator << std::endl;
 
     // Combine here some transforms, and visualize the result
     std::cout << separatorStar << "Combine transforms and visualize the result" << separatorStar << std::endl;
@@ -109,7 +109,21 @@ void normalTransformExercise()
     Vector3D vTransformed = S.transformVector(v);
     std::cout << "Vector v\' = " << vTransformed << "\n" << std::endl;
 
-    // (...)
+	Vector3D nTransformed = S.transformVector(n);
+	std::cout << "Vector n\' = " << nTransformed << "\n" << std::endl;
+
+	double dotproduct = dot(nTransformed, vTransformed);
+	std::cout << "dot(n\', v\') = " << dotproduct << "\n" << std::endl;
+
+	Matrix4x4 STranspose;
+	S.transpose(STranspose);
+	Matrix4x4 STInverse;
+	STranspose.inverse(STInverse);
+	Vector3D nTransformedCorrect = STInverse.transformVector(n);
+	std::cout << "Vector n\' = " << nTransformedCorrect << "\n" << std::endl;
+
+	double dotproductCorrect = dot(nTransformedCorrect, vTransformed);
+	std::cout << "dot(n\', v\') = " << dotproductCorrect << "\n" << std::endl;
 }
 
 void paintingAnImageExercise()
@@ -232,7 +246,7 @@ int main()
 
     // ASSIGNMENT 1
     transformationsExercise();
-    //normalTransformExercise();
+    normalTransformExercise();
     //paintingAnImageExercise();
     //filteringAnImageExercise();
 
