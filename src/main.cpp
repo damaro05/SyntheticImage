@@ -2,6 +2,7 @@
 #include <stdlib.h> /* srand, rand */
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 #include "core/film.h"
 #include "core/matrix4x4.h"
@@ -10,6 +11,8 @@
 #include "shapes/sphere.h"
 #include "cameras/ortographic.h"
 #include "cameras/perspective.h"
+
+#define PI 3.14159265359
 
 void transformationsExercise()
 {
@@ -147,6 +150,35 @@ void paintingAnImageExercise()
     film.save("./paintingAnImage.bmp");
 }
 
+
+Vector3D blurFilter(Film &image, int lin, int col, int radius, bool isGaussian) {
+	Vector3D currentPixel = (0, 0, 0);
+	int resX, resY, numPixels = 0;
+	float sumWeight = 0;
+	resX = (int)image.getWidth();
+	resY = (int)image.getHeight();
+	
+	for (int x = lin - radius; x <= lin + radius; x++) {
+		for (int y = col - 1; y < col + 2; y++) {
+
+			if (x >= 0 && x < resX && y >= 0 && y < resY) {
+				if (isGaussian) {
+					float dist = (x - lin)*(x - lin) + (y - col)*(y - col);
+					float weight = exp( -dist / (2*radius*radius)) / (PI*2*radius*radius);
+					currentPixel += image.getPixelValue(x, y) * weight;
+					sumWeight += weight;
+				}
+				else {
+					currentPixel += image.getPixelValue(x, y);
+					numPixels++;
+				}
+			}
+		}
+	}
+	if (isGaussian) return (currentPixel / (int)sumWeight);
+	else return (currentPixel / numPixels);
+}
+
 void filteringAnImageExercise()
 {
 	// Create two instances of the film class with the same resolution
@@ -158,6 +190,8 @@ void filteringAnImageExercise()
 
 	Film *image1 = &f1;
 	Film *image2 = &f2;
+
+	Film *image1bis = NULL;
 
 	// Create the original image
 	//  Draw a circle centered at centerX, centerY (in pixels, image space)
@@ -175,25 +209,28 @@ void filteringAnImageExercise()
 
 
 			//TESTING CORNERS AND BORDERS
-			/*if ((lin - 100)*(lin - 100) + (col - 100)*(col - 100) < r*r)
+			if ((lin - 100)*(lin - 100) + (col - 100)*(col - 100) < r*r)
 				f1.setPixelValue(col, lin, Vector3D(1, 0, 0));
 
 			if (lin >= 0 && lin < 15 && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
 			if (lin >= 0 && lin < 15 && col >= resY - 16 && col < resY) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
 			if (lin >= resX - 16 && lin < resX && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
 			if (lin >= resX - 16 && lin < resX && col >= resY - 16 && col < resY) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
-			*/
+			
 		}
 	}
 
 	f1.save("./blurred_original.bmp");
+	image1bis = image1;
+
 	// Filter-related variables
 	// Declare here your filter-related variables
 	// (e.g., FILTER SIZE)
-	int iteraciones = 100;
+	int iteraciones = 25;
 	int fSize = 3;
 	int radius = (fSize - 1) / 2;
 	int numPixels = 0; //Numero de pixeles afectados por el filtro segun la posicion del centro
+	bool isGaussian = true;
 	Vector3D currentPixel = (0,0,0);
 	
 	// Implement here your image filtering algorithm
@@ -202,18 +239,8 @@ void filteringAnImageExercise()
 		{
 			for (int col = 0; col < resY; col++)
 			{
-				for (int x = lin - radius; x <= lin + radius; x++) {
-					for (int y = col - 1; y < col + 2; y++) {
-
-						if (x >= 0 && x < resX && y >= 0 && y < resY) {
-							currentPixel += image1->getPixelValue(x, y);
-							numPixels++;
-						}
-					}
-				}
-				image2->setPixelValue(col, lin, currentPixel/numPixels);
-				currentPixel = (0, 0, 0);
-				numPixels = 0;
+				currentPixel = blurFilter(*image1, lin, col, radius, isGaussian);
+				image2->setPixelValue(col, lin, currentPixel);
 			}
 		}
 		Film *aux;
@@ -224,6 +251,29 @@ void filteringAnImageExercise()
     
     // DO NOT FORGET TO SAVE YOUR IMAGE!
 	image1->save("./blurred_filter.bmp");
+	
+	/*
+	image1 = image1bis;
+	isGaussian = true;
+
+	// Implement here your image filtering algorithm (Gaussian filter)
+	for (int it = 0; it < iteraciones; it++) {
+		for (int lin = 0; lin < resX; lin++)
+		{
+			for (int col = 0; col < resY; col++)
+			{
+				currentPixel = blurFilter(*image1, lin, col, radius, isGaussian);
+				image2->setPixelValue(col, lin, currentPixel);
+			}
+		}
+		Film *aux;
+		aux = image1;
+		image1 = image2;
+		image2 = aux;
+	}
+
+	// DO NOT FORGET TO SAVE YOUR IMAGE!
+	image1->save("./blurred_gaussian_filter.bmp");*/
 }
 
 void completeSphereClassExercise()
