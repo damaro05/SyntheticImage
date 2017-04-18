@@ -172,6 +172,11 @@ void filteringAnImageExercise()
 			// Use the equation of the sphere to determine the pixel color
 			if ((lin - centerX)*(lin - centerX) + (col - centerY)*(col - centerY) < r*r)
 				f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
+
+			if (lin >= 0 && lin < 15 && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
+			//if (lin >= 0 && lin < 15 && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
+			//if (lin >= 0 && lin < 15 && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
+			//if (lin >= 0 && lin < 15 && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
 		}
 	}
 
@@ -190,10 +195,43 @@ void filteringAnImageExercise()
 		{
 			for (int col = 0; col < resY; col++)
 			{
+				//Internal part
 				if (lin > 0 && lin < resX-1 && col > 0 && col < resY-1) {
 					for (int x = lin - radius; x <= lin + radius; x++) {
 						for (int y = col - 1; y < col + 2; y++) {
-							currentPixel += image1->getPixelValue(x, y)/9.0;
+							currentPixel += image1->getPixelValue(x, y) / (fSize*fSize);
+						}
+					}
+				}
+				//Top-left corner
+				else if (lin == 0 && col == 0) {
+					for (int x = 0; x <= radius; x++) {
+						for (int y = 0; y <= radius; y++) {
+							currentPixel += image1->getPixelValue(x, y) / (fSize + (radius*radius));
+						}
+					}
+				}
+				//Top-right corner
+				else if (lin == 0 && col == resY-1) {
+					for (int x = (resX-1)-(radius+1); x < resX; x++) {
+						for (int y = 0; y < radius; y++) {
+							currentPixel += image1->getPixelValue(x, y) / (fSize + (radius*radius));
+						}
+					}
+				}
+				//Bottom-left corner
+				else if (lin == resX-1 && col == 0) {
+					for (int x = 0; x <= radius; x++) {
+						for (int y = (resY - 1) - (radius + 1); y < resY; y++) {
+							currentPixel += image1->getPixelValue(x, y) / (fSize + (radius*radius));
+						}
+					}
+				}
+				//Bottom-right corner
+				else if (lin == resX - 1 && col == resY - 1) {
+					for (int x = (resX - 1) - (radius + 1); x < resX; x++) {
+						for (int y = (resY - 1) - (radius + 1); y < resY; y++) {
+							currentPixel += image1->getPixelValue(x, y) / (fSize + (radius*radius));
 						}
 					}
 				}
