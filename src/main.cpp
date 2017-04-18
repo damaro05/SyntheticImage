@@ -173,20 +173,27 @@ void filteringAnImageExercise()
 			if ((lin - centerX)*(lin - centerX) + (col - centerY)*(col - centerY) < r*r)
 				f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
 
+
+			//TESTING CORNERS AND BORDERS
+			/*if ((lin - 100)*(lin - 100) + (col - 100)*(col - 100) < r*r)
+				f1.setPixelValue(col, lin, Vector3D(1, 0, 0));
+
 			if (lin >= 0 && lin < 15 && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
-			//if (lin >= 0 && lin < 15 && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
-			//if (lin >= 0 && lin < 15 && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
-			//if (lin >= 0 && lin < 15 && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
+			if (lin >= 0 && lin < 15 && col >= resY - 16 && col < resY) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
+			if (lin >= resX - 16 && lin < resX && col >= 0 && col < 15) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
+			if (lin >= resX - 16 && lin < resX && col >= resY - 16 && col < resY) f1.setPixelValue(col, lin, Vector3D(1, 1, 0));
+			*/
 		}
 	}
 
-	f1.save("./burred_original.bmp");
+	f1.save("./blurred_original.bmp");
 	// Filter-related variables
 	// Declare here your filter-related variables
 	// (e.g., FILTER SIZE)
 	int iteraciones = 100;
 	int fSize = 3;
 	int radius = (fSize - 1) / 2;
+	int numPixels = 0; //Numero de pixeles afectados por el filtro segun la posicion del centro
 	Vector3D currentPixel = (0,0,0);
 	
 	// Implement here your image filtering algorithm
@@ -195,48 +202,18 @@ void filteringAnImageExercise()
 		{
 			for (int col = 0; col < resY; col++)
 			{
-				//Internal part
-				if (lin > 0 && lin < resX-1 && col > 0 && col < resY-1) {
-					for (int x = lin - radius; x <= lin + radius; x++) {
-						for (int y = col - 1; y < col + 2; y++) {
-							currentPixel += image1->getPixelValue(x, y) / (fSize*fSize);
+				for (int x = lin - radius; x <= lin + radius; x++) {
+					for (int y = col - 1; y < col + 2; y++) {
+
+						if (x >= 0 && x < resX && y >= 0 && y < resY) {
+							currentPixel += image1->getPixelValue(x, y);
+							numPixels++;
 						}
 					}
 				}
-				//Top-left corner
-				else if (lin == 0 && col == 0) {
-					for (int x = 0; x <= radius; x++) {
-						for (int y = 0; y <= radius; y++) {
-							currentPixel += image1->getPixelValue(x, y) / (fSize + (radius*radius));
-						}
-					}
-				}
-				//Top-right corner
-				else if (lin == 0 && col == resY-1) {
-					for (int x = (resX-1)-(radius+1); x < resX; x++) {
-						for (int y = 0; y < radius; y++) {
-							currentPixel += image1->getPixelValue(x, y) / (fSize + (radius*radius));
-						}
-					}
-				}
-				//Bottom-left corner
-				else if (lin == resX-1 && col == 0) {
-					for (int x = 0; x <= radius; x++) {
-						for (int y = (resY - 1) - (radius + 1); y < resY; y++) {
-							currentPixel += image1->getPixelValue(x, y) / (fSize + (radius*radius));
-						}
-					}
-				}
-				//Bottom-right corner
-				else if (lin == resX - 1 && col == resY - 1) {
-					for (int x = (resX - 1) - (radius + 1); x < resX; x++) {
-						for (int y = (resY - 1) - (radius + 1); y < resY; y++) {
-							currentPixel += image1->getPixelValue(x, y) / (fSize + (radius*radius));
-						}
-					}
-				}
-				image2->setPixelValue(col, lin, currentPixel);
+				image2->setPixelValue(col, lin, currentPixel/numPixels);
 				currentPixel = (0, 0, 0);
+				numPixels = 0;
 			}
 		}
 		Film *aux;
@@ -246,7 +223,7 @@ void filteringAnImageExercise()
 	}
     
     // DO NOT FORGET TO SAVE YOUR IMAGE!
-	image1->save("./burred_filter.bmp");
+	image1->save("./blurred_filter.bmp");
 }
 
 void completeSphereClassExercise()
