@@ -279,30 +279,37 @@ void filteringAnImageExercise()
 void completeSphereClassExercise()
 {
     // Make your intersection tests here
-    // (....)
+	double radius = 1.0;
+	Vector3D delta(0, 0, 3);
+	Matrix4x4 objectToWorld = Matrix4x4::translate(delta);
+	Sphere sphere(radius, objectToWorld);
+
+	//...
+
 }
 
-void eqSolverExercise()
+void eqSolverExercise(double A, double B, double C )
 {
     EqSolver solver;
     rootValues roots;
-
-    double A, B, C;
-
-    // (...)
-
-	bool hasRoots = true;
-    //bool hasRoots = solver.rootQuadEq(A, B, C, roots);
+	
+	//bool hasRoots = true;
+    bool hasRoots = solver.rootQuadEq(A, B, C, roots);
 
     if(!hasRoots)
     {
-        std::cout << "Equation has no real roots!" << std::endl;
+        std::cout << "Equation " << A << "x^2 + " << B << "x + " << C << " = 0  has no real roots!" << std::endl;
     }
     else
     {
         // SHOW THE SOLUTIONS OF THE EQUATION
-        // (...)
+		std::cout << "Solutions for " << A << "x^2 + " << B << "x + " << C << " = 0 :" << std::endl;
+		for(int x = 0; x < roots.nValues; x++)
+			std::cout << "Solution " << x << ": " << roots.values[x] << std::endl;
+		std::cout << std::endl;
     }
+
+
 }
 
 void raytrace()
@@ -340,11 +347,13 @@ int main()
     transformationsExercise();
     normalTransformExercise();
     paintingAnImageExercise();
-    filteringAnImageExercise();
+    //filteringAnImageExercise();
 
     // ASSIGNMENT 2
-    //eqSolverExercise();
-    //completeSphereClassExercise();
+    eqSolverExercise(5, 6, 1); //A = 5, B = 6, C = 1
+	eqSolverExercise(5, 2, 1); //A = 5, B = 2, C = 1
+
+    completeSphereClassExercise();
     //raytrace();
 
     std::cout << "\n\n" << std::endl;

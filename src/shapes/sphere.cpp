@@ -13,9 +13,13 @@ bool Sphere::rayIntersectP(const Ray &ray) const
 
     // The ray-sphere intersection equation can be expressed in the
     // form A*t^2 + B*t + C = 0, where:
-    /*double A = ;
-    double B = ;
-    double C = ;
+
+	Vector3D O = r.o;
+	Vector3D D = r.d;
+
+    double A = dot(D,D);
+    double B = 2*dot(O,D);
+	double C = dot(O,O) - radius*radius;
 
     // Now we need to solve this quadratic equation for t
     EqSolver solver;
@@ -25,7 +29,7 @@ bool Sphere::rayIntersectP(const Ray &ray) const
     if(!hasRoots)
     {
         return false;
-    }*/
+    }
 
     return true;
 }
