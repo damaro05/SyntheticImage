@@ -284,7 +284,17 @@ void completeSphereClassExercise()
 	Matrix4x4 objectToWorld = Matrix4x4::translate(delta);
 	Sphere sphere(radius, objectToWorld);
 
-	//...
+	std::cout << sphere << std::endl;
+
+	Ray r1(Vector3D(0, 0, 0), Vector3D(0, 0, 1));
+	Ray r2(Vector3D(0, 0, 0), Vector3D(0, 1, 0));
+
+	if(!sphere.rayIntersectP(r1)) std::cout << r1 << "Ray does not intersects.\n" << std::endl;
+	else std::cout << r1 << "Ray intersects.\n" << std::endl;
+
+
+	if (!sphere.rayIntersectP(r2)) std::cout << r2 << "Ray does not intersects.\n" << std::endl;
+	else std::cout << r2 << "Ray intersects.\n" << std::endl;
 
 }
 
@@ -327,14 +337,42 @@ void raytrace()
                              // meaning that the camera space = world space
     OrtographicCamera camOrtho(cameraToWorld, film);
 
+	double radius = 1.0, xFactor = 1.0 / resX, yFactor = 1.0 / resY;
+	Vector3D delta(0, 0, 3);
+	Matrix4x4 objectToWorld = Matrix4x4::translate(delta);
+	Sphere sphere(radius, objectToWorld);
+	Vector3D red(1, 0, 0);
+	Vector3D black(0, 0, 0);
+	Ray rOrtho;
+
+	for (double x = xFactor / 2; x < 1.0; x += xFactor) {
+		for (double y = yFactor / 2; y < 1.0; y += yFactor) {
+			rOrtho = camOrtho.generateRay(x, y);
+			if (sphere.rayIntersectP(rOrtho)) film.setPixelValue(x*resX, y*resY, red);
+			else film.setPixelValue(x*resX, y*resY, black);
+		}
+	}
+
+	film.save("./Orthographic_view.bmp");
+
     /* ******************* */
     /* Perspective Camera */
     /* ******************* */
     double fovRadians = Utils::degreesToRadians(60);
     PerspectiveCamera camPersp(cameraToWorld, fovRadians, film);
 
+	Ray rPersp;
+
+	for (double x = xFactor/2; x < 1.0; x += xFactor) {
+		for (double y = yFactor / 2; y < 1.0; y += yFactor) {
+			rPersp = camPersp.generateRay(x, y);
+			if (sphere.rayIntersectP(rPersp)) film.setPixelValue(x*resX, y*resY, red);
+			else film.setPixelValue(x*resX, y*resY, black);
+		}
+	}
+
     // Save the final result to file
-    film.save();
+	film.save("./Perspective_view.bmp");
 }
 
 int main()
@@ -344,6 +382,7 @@ int main()
     std::cout << separator << "RTIS - Ray Tracer for \"Imatge Sintetica\"" << separator << std::endl;
 
     // ASSIGNMENT 1
+	
     transformationsExercise();
     normalTransformExercise();
     paintingAnImageExercise();
@@ -354,7 +393,7 @@ int main()
 	eqSolverExercise(5, 2, 1); //A = 5, B = 2, C = 1
 
     completeSphereClassExercise();
-    //raytrace();
+    raytrace();
 
     std::cout << "\n\n" << std::endl;
     return 0;
