@@ -73,3 +73,17 @@ int Film::save(const char* filename)
 {
 	return BitMap::save(data, width, height, filename);
 }
+
+Film* Film::copy() {
+	Film* f = new Film(getWidth(), getHeight());
+
+	for (size_t h = 0; h<height; h++)
+	{
+		for (size_t w = 0; w<width; w++)
+		{
+			f->setPixelValue(w, h, getPixelValue(w, h));
+		}
+	}
+
+	return f;
+}

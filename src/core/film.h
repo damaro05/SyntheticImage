@@ -33,6 +33,8 @@ public:
 	int save(const char* filename);
     void clearData();
 
+	Film* copy();
+
 private:
     // Image size
     size_t width;
