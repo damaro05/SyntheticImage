@@ -1,7 +1,7 @@
 #ifndef EQSOLVER_H
 #define EQSOLVER_H
 
-// Auxiliar structure for storing the roots of polynomials up
+// Auxiliary structure for storing the roots of polynomials up
 // to a degree 2
 struct rootValues
 {

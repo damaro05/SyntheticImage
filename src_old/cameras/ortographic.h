@@ -3,7 +3,6 @@
 
 #include "camera.h"
 
-
 // Ortographic Camera Interface
 class OrtographicCamera : public Camera
 {
