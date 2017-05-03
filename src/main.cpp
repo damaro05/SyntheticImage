@@ -141,7 +141,7 @@ int main()
 
     // Save the final result to file
     std::cout << "\n\nSaving the result to file output.bmp\n" << std::endl;
-    film->save();
+    film->save("./hasIntersection.bmp");
 
     std::cout << "\n\n" << std::endl;
     return 0;
