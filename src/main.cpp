@@ -15,7 +15,6 @@
 
 #include "shaders/intersectionshader.h"
 #include "shaders/depthshader.h"
-#include "shaders/normalshader.h"
 
 #include "materials/phong.h"
 
@@ -137,7 +136,6 @@ int main()
     Vector3D intersectionColor(1,0,0);
 	//Shader *shader = new IntersectionShader(intersectionColor, bgColor);
 	Shader *shader = new DepthShader(Vector3D(0.4, 1, 0.4), 8, bgColor);
-	//Shader *shader = new NormalShader(bgColor);
 
     // Declare pointers to all the variables which describe the scene
     Camera *cam;
