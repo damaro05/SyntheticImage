@@ -39,8 +39,9 @@ bool Utils::getClosestIntersection(const Ray &cameraRay, const std::vector<Shape
 
 	for (size_t objIndex = 0; objIndex < objectsList.size(); objIndex++) {
 		const Shape* obj = objectsList.at(objIndex);
-		if (obj->rayIntersect(cameraRay, its))
+		if (obj->rayIntersect(cameraRay, its)){
 			hasIts = true;
+		}
 	}
 
     return hasIts;
