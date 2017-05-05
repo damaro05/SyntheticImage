@@ -2,9 +2,20 @@
 
 #include <iostream>
 
-Phong::Phong()
-{ 
+Phong::Phong(const Vector3D &kd, const Vector3D &ks, const double& shininess)
+{
+	_kd = kd;
+	_ks = ks;
+	_shininess = shininess;
+}
 
+Vector3D Phong::getReflectance(const Vector3D &n, const Vector3D &wo,
+	const Vector3D &wi) const {
+	Vector3D diffuse = _kd * (dot(wi, n));
+	Vector3D wr = n * 2 * dot(n, wi) - wi;
+	Vector3D specular = _ks * pow(dot(wo, wr), 2);
+	
+	return (diffuse + specular);
 }
 
 double Phong::getIndexOfRefraction() const
@@ -17,17 +28,15 @@ double Phong::getIndexOfRefraction() const
 
 bool Phong::hasSpecular() const
 {
-	return -1;
-
+	return false;
 }
 
 bool Phong::hasTransmission() const
 {
-	return -1;
-
+	return false;
 }
 
 bool Phong::hasDiffuseOrGlossy() const
 {
-	return -1;
+	return true;
 }
