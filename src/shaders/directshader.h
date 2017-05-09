@@ -7,7 +7,7 @@ class DirectShader : public Shader
 {
 public:
 	DirectShader() = delete;
-	DirectShader(Vector3D color_, double maxDist_, Vector3D bgColor_);
+	DirectShader(Vector3D bgColor_, double maxDist_);
 
 	virtual Vector3D computeColor(const Ray &r,
 		const std::vector<Shape*> &objList,
