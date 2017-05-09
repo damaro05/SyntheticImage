@@ -14,15 +14,21 @@ Vector3D DirectShader::computeColor(const Ray &r,
 	Intersection its = Intersection();
 	if (Utils::getClosestIntersection(r, objList, its)) {
 		Vector3D normal = its.normal;
-		Vector3D pointToCamera = (r.o - its.itsPoint).normalized();
+		Vector3D pointToCamera = (its.itsPoint - r.o).normalized();
 		//double dist = sqrt(dot(pointToCamera, pointToCamera));
+
 		Vector3D color;
 		for (int i = 0; i < lsList.size(); i++) {
-			Vector3D pointToLight = (r.o - its.itsPoint).normalized();
-		
+			Vector3D pointToLight = (lsList[i].getPosition() - its.itsPoint).normalized();
+			double distanceToLight = sqrt(dot(lsList[i].getPosition() - its.itsPoint, lsList[i].getPosition() - its.itsPoint));
+
+			if (dot(pointToLight, normal) <= 0) continue;
+			Ray shadowRay(its.itsPoint, pointToLight, 0, 0.2, distanceToLight);
+			if (Utils::hasIntersection(shadowRay, objList)) continue;
+
 			Vector3D intensity = lsList[i].getIntensity(its.itsPoint);
 			Vector3D reflectance = its.shape->getMaterial().getReflectance(normal, pointToCamera, pointToLight);
-			color += Vector3D(intensity.x * reflectance.x, intensity.y * reflectance.y, intensity.z * reflectance.z);
+			color += Utils::multiplyPerCanal(intensity, reflectance);
 		}
 
 		return color;

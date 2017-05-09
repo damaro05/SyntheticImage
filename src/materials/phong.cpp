@@ -13,9 +13,10 @@ Vector3D Phong::getReflectance(const Vector3D &n, const Vector3D &wo,
 	const Vector3D &wi) const {
 	Vector3D diffuse = _kd * (dot(wi, n));
 	Vector3D wr = n * 2 * dot(n, wi) - wi;
-	Vector3D specular = _ks * pow(dot(wo, wr), 2);
+	Vector3D specular = _ks * pow(dot(wo, wr), _shininess);
 	
 	return (diffuse + specular);
+	//return diffuse;
 }
 
 double Phong::getIndexOfRefraction() const

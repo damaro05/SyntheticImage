@@ -39,10 +39,10 @@ void buildSceneSphere(Camera* &cam, Film* &film,
     /* ************************** */
     // (...)
     //  EXAMPLE:  Material *green_50 = new Phong (Vector3D(0.2, 0.7, 0.3), Vector3D(0.2, 0.6, 0.2), 50);
-	Material *green_50 = new Phong(Vector3D(0.2, 0.7, 0.3), Vector3D(0.2, 0.6, 0.2), 0);
-	Material *red_100 = new Phong(Vector3D(0.7, 0.0, 0.0), Vector3D(0.6, 0.0, 0.0), 0);
-	Material *blue_0 = new Phong(Vector3D(0.2, 0.1, 0.7), Vector3D(0.2, 0.1, 0.6), 0);
-	Material *white_0 = new Phong(Vector3D(0.0, 0.0, 0.0), Vector3D(1.0, 1.0, 1.0), 1000);
+	Material *green_50 = new Phong(Vector3D(0.2, 0.7, 0.3), Vector3D(0.2, 0.6, 0.2), 100);
+	Material *red_100 = new Phong(Vector3D(1, 0.3, 0.5), Vector3D(1, 0.3, 0.5), 150);
+	Material *blue_0 = new Phong(Vector3D(0.2, 0.1, 1), Vector3D(0.2, 0.1, 1), 100);
+	Material *white_0 = new Phong(Vector3D(0.0, 0.0, 0.0), Vector3D(1.0, 1.0, 1.0), 100);
 
 
     /* ******* */
@@ -56,19 +56,19 @@ void buildSceneSphere(Camera* &cam, Film* &film,
     Matrix4x4 sphereTransform1;
     sphereTransform1 = sphereTransform1.translate(Vector3D(-1.0, -0.5, 2*std::sqrt(2.0)));
     //Shape *s1 = new Sphere (0.25, sphereTransform1, NULL);
-	Shape *s1 = new Sphere(0.25, sphereTransform1, green_50);
+	Shape *s1 = new Sphere(0.25, sphereTransform1, blue_0);
 
     // Define and place a sphere
     Matrix4x4 sphereTransform2;
     sphereTransform2 = sphereTransform2.translate(Vector3D(1.0, 0.0, 6));
     //Shape *s2 = new Sphere (1, sphereTransform2, NULL);
-	Shape *s2 = new Sphere(1, sphereTransform2, red_100);
+	Shape *s2 = new Sphere(1, sphereTransform2, green_50);
 
     // Define and place a sphere
     Matrix4x4 sphereTransform3;
     sphereTransform3 = sphereTransform3.translate(Vector3D(0.3, -0.75, 3.5));
     //Shape *s3 = new Sphere (0.25, sphereTransform3, NULL);
-	Shape *s3 = new Sphere(0.25, sphereTransform3, white_0);
+	Shape *s3 = new Sphere(0.25, sphereTransform3, red_100);
 
     // Store the objects in the object list
     objectsList->push_back(s1);
@@ -81,9 +81,9 @@ void buildSceneSphere(Camera* &cam, Film* &film,
     /* ****** */
     //
     // ADD YOUR LIGHT SOURCES HERE
-	PointLightSource light1(Vector3D(0, 0, 0), Vector3D(5, 5, 5));
-	PointLightSource light2(Vector3D(1, 1, 1), Vector3D(5, 0, 5));
-	PointLightSource light3(Vector3D(2, 2, 4), Vector3D(3, 3, 3));
+	PointLightSource light1(Vector3D(1, 2, 1), Vector3D(10, 10, 10));
+	PointLightSource light2(Vector3D(-2.5, 0.5, 0), Vector3D(6, 6, 6));
+	PointLightSource light3(Vector3D(2, -1.5, 2), Vector3D(7, 7, 7));
 
 	lightSourceList = new std::vector<PointLightSource>;
 	lightSourceList->push_back(light1);
