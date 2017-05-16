@@ -4,7 +4,7 @@
 
 Mirror::Mirror(const Vector3D &kd, const Vector3D &ks, const double& shininess)
 {
-
+	_kd = kd;
 	_ks = ks;
 	_shininess = shininess;
 }
@@ -14,9 +14,9 @@ Vector3D Mirror::getReflectance(const Vector3D &n, const Vector3D &wo,
 
 	//Vector3D diffuse = _kd * (dot(wi, n));
 	Vector3D wr = n * 2 * dot(n, wo) - wo;
-	Vector3D specular = _ks * pow(dot(wo, wr), _shininess);
+	//Vector3D specular = _ks * pow(dot(wo, wr), _shininess);
 	
-	return specular;
+	return wr;
 	//return diffuse;
 }
 
