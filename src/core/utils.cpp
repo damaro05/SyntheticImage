@@ -97,6 +97,7 @@ Vector3D Utils::computeReflectionDirection(const Vector3D &rayDirection, const V
 bool Utils::isTotalInternalReflection(const double &eta, const double &cosThetaI,
                                       double &cosThetaT_out)
 {
+
     return false;
 }
 

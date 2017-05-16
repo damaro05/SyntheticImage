@@ -2,11 +2,9 @@
 
 #include <iostream>
 
-Mirror::Mirror(const Vector3D &kd, const Vector3D &ks, const double& shininess)
+Mirror::Mirror(const Vector3D &color)
 {
-	_kd = kd;
-	_ks = ks;
-	_shininess = shininess;
+	_color = color;
 }
 
 Vector3D Mirror::getReflectance(const Vector3D &n, const Vector3D &wo,

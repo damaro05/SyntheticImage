@@ -1,13 +1,12 @@
-#ifndef MIRROR
-#define MIRROR
+#ifndef TRANSMISSIVE
+#define TRANSMISSIVE
 #include "material.h"
 #include "../core/vector3d.h"
 
-class Mirror : public Material
+class Transmissive : public Material
 {
 public:
-	Vector3D _color;
-	Mirror(const Vector3D &color);
+	Transmissive(double, Vector3D);
 
     virtual Vector3D getReflectance(const Vector3D &n, const Vector3D &wo,
                                     const Vector3D &wi) const;
@@ -17,8 +16,8 @@ public:
     virtual double getIndexOfRefraction() const;
 
 private:
-	
+	double eta;
 };
 
 
-#endif // MIRROR
+#endif // TRANSMISSIVE
