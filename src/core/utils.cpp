@@ -97,15 +97,16 @@ Vector3D Utils::computeReflectionDirection(const Vector3D &rayDirection, const V
 bool Utils::isTotalInternalReflection(const double &eta, const double &cosThetaI,
                                       double &cosThetaT_out)
 {
-
-    return false;
+	double radicand = 1 + pow(eta, 2)*(pow(cosThetaI, 2) - 1);
+	if(radicand >= 0)cosThetaT_out = sqrt(radicand);
+    return (radicand < 0);
 }
 
 Vector3D Utils::computeTransmissionDirection(const Ray &r, const Vector3D &normal,
                                              const double &eta, const double &cosThetaI,
                                              const double &cosThetaT)
 {
-    return Vector3D(0);
+    return (r.d * eta + normal*(eta*cosThetaI - cosThetaT));//.normalized();
 }
 
 double Utils::computeReflectanceCoefficient(const double &eta, const double &cosThetaI,
