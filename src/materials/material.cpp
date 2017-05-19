@@ -1,4 +1,4 @@
-#include "material.h"
+﻿#include "material.h"
 
 #include <iostream>
 
@@ -11,4 +11,13 @@ double Material::getIndexOfRefraction() const
               << std::endl;
 
     return -1;
+}
+
+Vector3D Material::getDiffuseCoefficient() const
+{
+	std::cout << "Warning!"
+		<< "Calling \"Material::getDiffuseCoefficient()\""
+		<< "foranon-diffuseornon-glossymaterial"
+		<< std::endl;
+	return Vector3D(-1);
 }

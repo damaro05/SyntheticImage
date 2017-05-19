@@ -34,6 +34,9 @@
     <Filter Include="src\shapes">
       <UniqueIdentifier>{471790e2-2b7b-4bb4-843a-8f2850c9ecfc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\samplers">
+      <UniqueIdentifier>{12d122a1-f31a-4552-aa80-5eeefa425c47}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp">
@@ -114,6 +117,12 @@
     <ClCompile Include="..\..\src\materials\transmissive.cpp">
       <Filter>src\materials</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\shaders\globalshader.cpp">
+      <Filter>src\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\samplers\hemisphericalsampler.cpp">
+      <Filter>src\samplers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\cameras\camera.h">
@@ -190,6 +199,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\materials\transmissive.h">
       <Filter>src\materials</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\shaders\globalshader.h">
+      <Filter>src\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\samplers\hemisphericalsampler.h">
+      <Filter>src\samplers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

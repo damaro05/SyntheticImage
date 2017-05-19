@@ -17,6 +17,7 @@
 #include "shaders/intersectionshader.h"
 #include "shaders/depthshader.h"
 #include "shaders/directshader.h"
+#include "shaders/globalshader.h"
 
 #include "materials/phong.h"
 #include "materials/mirror.h"
@@ -87,7 +88,7 @@ void buildSceneCornellBox(Camera* &cam, Film* &film,
 	Vector3D lightPosition1 = Vector3D(0, offset - 1, 2 * offset);
 	Vector3D lightPosition2 = Vector3D(0, offset - 1, 0);
 	Vector3D lightPosition3 = Vector3D(0, offset - 1, offset);
-	Vector3D intensity = Vector3D(10, 10, 10); // Radiant intensity (watts/sr)
+	Vector3D intensity = Vector3D(5.5, 5.5, 5.5); // Radiant intensity (watts/sr)
 	PointLightSource pointLS1(lightPosition1, intensity);
 	PointLightSource pointLS2(lightPosition2, intensity);
 	PointLightSource pointLS3(lightPosition3, intensity);
@@ -229,9 +230,13 @@ int main()
     // Declare the shader
     Vector3D bgColor(0.0, 0.0, 0.0); // Background color (for rays which do not intersect anything)
     Vector3D intersectionColor(1,0,0);
+	Vector3D at(0.2, 0.2, 0.2);
+
 	//Shader *shader = new IntersectionShader(intersectionColor, bgColor);
 	//Shader *shader = new DepthShader(Vector3D(0.4, 1, 0.4), 8, bgColor);
-	Shader *shader = new DirectShader(bgColor, 100);
+	//Shader *shader = new DirectShader(bgColor, 100);
+	
+	Shader *shader = new GlobalShader(bgColor, at);
 
     // Declare pointers to all the variables which describe the scene
     Camera *cam;
@@ -247,7 +252,7 @@ int main()
 
     // Save the final result to file
     std::cout << "\n\nSaving the result to file output.bmp\n" << std::endl;
-    film->save("./hasIntersectionDepthShader.bmp");
+    film->save("./hasIntersectionGlobalShader.bmp");
 
     std::cout << "\n\n" << std::endl;
     return 0;

@@ -14,6 +14,7 @@ public:
     virtual bool hasTransmission() const;
     virtual bool hasDiffuseOrGlossy() const;
     virtual double getIndexOfRefraction() const;
+	Vector3D getDiffuseCoefficient() const;
 
 private:
 	double _shininess;

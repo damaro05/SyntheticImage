@@ -41,3 +41,8 @@ bool Phong::hasDiffuseOrGlossy() const
 {
 	return true;
 }
+
+Vector3D Phong::getDiffuseCoefficient() const
+{
+	return _kd;
+}
