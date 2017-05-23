@@ -20,8 +20,11 @@ Vector3D GlobalShader::computeColor(const Ray &r,
 		Vector3D Iind(0.0, 0.0, 0.0);
 
 		if (its.shape->getMaterial().hasSpecular()) {
+			double cosA = dot(-r.d.normalized(), normal.normalized());
+			if (cosA < 0)
+				return bgColor;
 			Vector3D wr = Utils::computeReflectionDirection(r.d, normal);
-			Ray reflectionRay(its.itsPoint, wr, r.depth, 0.2);
+			Ray reflectionRay(its.itsPoint, wr, r.depth, 0.05);
 			Idir = computeColor(reflectionRay, objList, lsList);
 		}
 
@@ -53,14 +56,14 @@ Vector3D GlobalShader::computeColor(const Ray &r,
 
 		if (its.shape->getMaterial().hasDiffuseOrGlossy()) {
 			//Iind = Utils::multiplyPerCanal(its.shape->getMaterial().getDiffuseCoefficient(), at);
-			HemisphericalSampler sampler;
+			
 
 			for (int i = 0; i < lsList.size(); i++) {
 				Vector3D pointToLight = (lsList[i].getPosition() - its.itsPoint).normalized();
 				double distanceToLight = sqrt(dot(lsList[i].getPosition() - its.itsPoint, lsList[i].getPosition() - its.itsPoint));
 
 				if (dot(pointToLight, normal) <= 0) continue;
-				Ray shadowRay(its.itsPoint, pointToLight, 0, 0.2, distanceToLight);
+				Ray shadowRay(its.itsPoint, pointToLight, 0, 0.05, distanceToLight);
 				if (Utils::hasIntersection(shadowRay, objList)) continue;
 
 				Vector3D intensity = lsList[i].getIntensity(its.itsPoint);
@@ -69,24 +72,35 @@ Vector3D GlobalShader::computeColor(const Ray &r,
 			}
 
 			if (r.depth == 0) {
-				int nSamples = 1;
+				HemisphericalSampler sampler;
+				int nSamples = 10;
+				Vector3D toRandomDir;
 				for (int i = 0; i < nSamples; i++) {
-					Vector3D toRandomDir = sampler.getSample(normal);
+					toRandomDir = sampler.getSample(normal);
 					
 					//Vector3D pointToLight = (lsList[i].getPosition() - toRandomDir).normalized();
 					//double distanceToLight = sqrt(dot(lsList[i].getPosition() - its.itsPoint, lsList[i].getPosition() - toRandomDir));
 
 					//if (dot(pointToLight, normal) <= 0) continue;
-					Ray samplerRay(its.itsPoint, -toRandomDir, r.depth + 1, 0.2);
+					Ray samplerRay(its.itsPoint, toRandomDir, r.depth + 1, 0.05);
 
 					Iind += computeColor(samplerRay, objList, lsList);
 				}
 				Iind /= nSamples;
 			}
-			else if(r.depth > 0){
+			else if (r.depth >= MAX_DEPTH) {
 				Iind = Utils::multiplyPerCanal(its.shape->getMaterial().getDiffuseCoefficient(), at);
 			}
+			else {
+				Ray normalRay(its.itsPoint, normal, r.depth+1, 0.05);
+				Vector3D wr = Utils::computeReflectionDirection(r.d, normal);
+				Ray reflectionRay(its.itsPoint, wr, r.depth+1, 0.05);
 
+				Vector3D normalColor = computeColor(normalRay, objList, lsList);
+				Vector3D reflectionColor = computeColor(reflectionRay, objList, lsList);
+
+				Iind = (normalColor + reflectionColor) / 2.0;
+			}
 		}
 
 		return Iind + Idir;

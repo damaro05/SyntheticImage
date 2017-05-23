@@ -1,6 +1,6 @@
 #ifndef GLOBALSHADER_H
 #define GLOBALSHADER_H
-
+#define MAX_DEPTH 5
 #include "shader.h"
 
 class GlobalShader : public Shader
