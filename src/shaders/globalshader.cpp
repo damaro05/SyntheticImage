@@ -44,12 +44,12 @@ Vector3D GlobalShader::computeColor(const Ray &r,
 				//return Vector3D(1, 0, 0);
 
 				Vector3D wt = Utils::computeTransmissionDirection(r, normal, eta, cosA, cosB);
-				Ray refractRay(its.itsPoint, wt, r.depth + 1);
+				Ray refractRay(its.itsPoint, wt, r.depth);
 				Idir = computeColor(refractRay, objList, lsList);
 			}
 			else {
 				Vector3D wr = Utils::computeReflectionDirection(r.d, normal);
-				Ray reflectionRay(its.itsPoint, wr, r.depth + 1);
+				Ray reflectionRay(its.itsPoint, wr, r.depth);
 				Idir = computeColor(reflectionRay, objList, lsList);
 			}
 		}
@@ -63,7 +63,7 @@ Vector3D GlobalShader::computeColor(const Ray &r,
 				double distanceToLight = sqrt(dot(lsList[i].getPosition() - its.itsPoint, lsList[i].getPosition() - its.itsPoint));
 
 				if (dot(pointToLight, normal) <= 0) continue;
-				Ray shadowRay(its.itsPoint, pointToLight, 0, 0.05, distanceToLight);
+				Ray shadowRay(its.itsPoint, pointToLight, r.depth + 1, 0.05, distanceToLight);
 				if (Utils::hasIntersection(shadowRay, objList)) continue;
 
 				Vector3D intensity = lsList[i].getIntensity(its.itsPoint);
@@ -73,7 +73,7 @@ Vector3D GlobalShader::computeColor(const Ray &r,
 
 			if (r.depth == 0) {
 				HemisphericalSampler sampler;
-				int nSamples = 10;
+				int nSamples = 150;
 				Vector3D toRandomDir;
 				for (int i = 0; i < nSamples; i++) {
 					toRandomDir = sampler.getSample(normal);
@@ -84,7 +84,9 @@ Vector3D GlobalShader::computeColor(const Ray &r,
 					//if (dot(pointToLight, normal) <= 0) continue;
 					Ray samplerRay(its.itsPoint, toRandomDir, r.depth + 1, 0.05);
 
-					Iind += computeColor(samplerRay, objList, lsList);
+					Vector3D rayLightInt = computeColor(samplerRay, objList, lsList);
+					Vector3D reflectance = its.shape->getMaterial().getReflectance(normal, -r.d, toRandomDir);
+					Iind += Utils::multiplyPerCanal(rayLightInt, reflectance);
 				}
 				Iind /= nSamples;
 			}
@@ -98,6 +100,12 @@ Vector3D GlobalShader::computeColor(const Ray &r,
 
 				Vector3D normalColor = computeColor(normalRay, objList, lsList);
 				Vector3D reflectionColor = computeColor(reflectionRay, objList, lsList);
+
+				Vector3D normalLightInt = its.shape->getMaterial().getReflectance(normal, -r.d, normal);
+				normalColor = Utils::multiplyPerCanal(normalColor, normalLightInt);
+
+				Vector3D wrLightInt = its.shape->getMaterial().getReflectance(normal, -r.d, wr);
+				reflectionColor = Utils::multiplyPerCanal(reflectionColor, wrLightInt);
 
 				Iind = (normalColor + reflectionColor) / 2.0;
 			}
