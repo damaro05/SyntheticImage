@@ -73,7 +73,7 @@ Vector3D GlobalShader::computeColor(const Ray &r,
 
 			if (r.depth == 0) {
 				HemisphericalSampler sampler;
-				int nSamples = 150;
+				int nSamples = 10;
 				Vector3D toRandomDir;
 				for (int i = 0; i < nSamples; i++) {
 					toRandomDir = sampler.getSample(normal);
