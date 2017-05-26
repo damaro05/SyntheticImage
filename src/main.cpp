@@ -292,6 +292,76 @@ void buildSceneProject(Camera* &cam, Film* &film,
 	lightSourceList->push_back(pointLS3);
 }
 
+
+/* ************ */
+/* Project code */
+/* ************ */
+
+void fourRaysFilter(Camera* &cam, Shader* &shader, Film* &film,
+	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, std::vector <std::vector <Vector3D> > &firstImage)
+{
+	std::cout << "First image complete. Computing anti-aliasing" << std::endl;
+
+	unsigned int sizeBar = 40;
+
+	size_t resX = film->getWidth();
+	size_t resY = film->getHeight();
+
+	int filterRadius = 1;
+	int differentPixels = 0;
+	int filterStrictness = 5;
+	double cosinusOfDifference = 0.3;
+	Vector3D finalColor;
+
+
+	for (size_t lin = 0; lin < resY; lin++)
+	{
+		// Show progression
+		if (lin % (resY / sizeBar) == 0)
+			std::cout << ".";
+
+		for (size_t col = 0; col < resX; col++)
+		{
+
+			//For para recorrer los pixeles colindantes
+			for (int x = col - filterRadius; x <= col + filterRadius; x++) {
+				for (int y = lin - filterRadius; y <= lin + filterRadius; y++) {
+
+					if (x >= 0 && x < resX && y >= 0 && y < resY) {
+						double cosinus = dot(firstImage[col][lin], firstImage[x][y]); //No es un buen indicador, hay que cambiar
+						if (cosinus > cosinusOfDifference) continue;
+						
+						differentPixels++;
+						
+					}
+				}
+			}
+
+			if (differentPixels > 0) finalColor = Vector3D(1.0, 1.0, 1.0);
+			else finalColor = firstImage[col][lin];
+			/*
+			if (differentPixels > filterStrictness) {
+				Vector3D finalColor(0, 0, 0);
+
+				for (double y = 0.25; y < 1; y += 0.5) {
+					for (double x = 0.25; x < 1; x += 0.5) {
+						Ray cameraRay = cam->generateRay((col + x) / resX, (lin + y) / resY);
+
+						// Compute ray color according to the used shader
+						finalColor += shader->computeColor(cameraRay, *objectsList, *lightSourceList);
+					}
+				}
+				finalColor /= 4; //4, number of rays
+			}
+			else finalColor = firstImage[col][lin];
+			*/
+			film->setPixelValue(col, lin, finalColor);
+			differentPixels = 0;
+		}
+	}
+}
+
+
 void raytraceProject(Camera* &cam, Shader* &shader, Film* &film,
 	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList)
 {
@@ -300,7 +370,6 @@ void raytraceProject(Camera* &cam, Shader* &shader, Film* &film,
 	size_t resX = film->getWidth();
 	size_t resY = film->getHeight();
 
-	//No deja declarar arrays porque resX y resY no son constantes, lo he probado todo
 	std::vector <std::vector <Vector3D> > firstImage;
 	firstImage.resize(resX);
 	for (size_t i = 0; i < resX; i++) {
@@ -321,60 +390,22 @@ void raytraceProject(Camera* &cam, Shader* &shader, Film* &film,
 		for (size_t col = 0; col<resX; col++)
 		{
 			// Compute the pixel position in NDC
-			//double x = (double)(col + 0.5) / resX;
-			//double y = (double)(lin + 0.5) / resY;
+			double x = (double)(col + 0.5) / resX;
+			double y = (double)(lin + 0.5) / resY;
 
 			// Generate the camera ray
-			//Ray cameraRay = cam->generateRay(x, y);
+			Ray cameraRay = cam->generateRay(x, y);
 
 			// Compute ray color according to the used shader
-			//Vector3D pixelColor = shader->computeColor(cameraRay, *objectsList, *lightSourceList);
+			Vector3D pixelColor = shader->computeColor(cameraRay, *objectsList, *lightSourceList);
 			
-
-			Vector3D pixelColor(0,0,0);
-			for (double y = 0.25; y < 1; y += 0.5) {
-				for (double x = 0.25; x < 1; x += 0.5) {
-					Ray cameraRay = cam->generateRay((col+x)/resX, (lin+y)/resY);
-
-					// Compute ray color according to the used shader
-					pixelColor += shader->computeColor(cameraRay, *objectsList, *lightSourceList);
-				}
-			}
-			pixelColor /= 4;
-
 			// Store the pixel color
-			film->setPixelValue(col, lin, pixelColor);
-			//firstImage[lin][col] = pixelColor;
+			//film->setPixelValue(col, lin, pixelColor);
+			firstImage[col][lin] = pixelColor;
 		}
 	}
 
-	/*/
-	std::cout << "First image complete. Computing anti-aliasing" << std::endl;
-
-	Vector3D finalColor;
-
-	for (size_t lin = 0; lin < resY; lin++)
-	{
-		// Show progression
-		if (lin % (resY / sizeBar) == 0)
-			std::cout << ".";
-
-		for (size_t col = 0; col < resX; col++)
-		{
-
-			for (int x = lin - 3; x <= lin + 3; x++) {
-				for (int y = col - 1; y < col + 2; y++) {
-
-					if (x >= 0 && x < resX && y >= 0 && y < resY) {
-						if(firstImage[x][y] )
-					}
-				}
-			}
-
-			film->setPixelValue(lin, col, finalColor);
-
-		}
-	}*/
+	fourRaysFilter(cam, shader, film, objectsList, lightSourceList, firstImage);
 }
 
 int main()
@@ -396,9 +427,9 @@ int main()
 
 	//Shader *shader = new IntersectionShader(intersectionColor, bgColor);
 	//Shader *shader = new DepthShader(Vector3D(0.4, 1, 0.4), 8, bgColor);
-	//Shader *shader = new DirectShader(bgColor, 100);
+	Shader *shader = new DirectShader(bgColor, 100);
 	
-	Shader *shader = new GlobalShader(bgColor, at);
+	//Shader *shader = new GlobalShader(bgColor, at);
 
     // Declare pointers to all the variables which describe the scene
     Camera *cam;
