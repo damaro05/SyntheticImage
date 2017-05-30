@@ -24,6 +24,16 @@
 #include "materials/mirror.h"
 #include "materials/transmissive.h"
 
+#define IMAGE_WIDTH 300
+#define IMAGE_HEIGHT 300
+
+struct rayInfo {
+	bool thrown = false;
+	Vector3D color = Vector3D(0.0, 0.0, 0.0);
+};
+
+rayInfo rays[IMAGE_WIDTH+1][IMAGE_HEIGHT+1];
+
 void buildSceneCornellBox(Camera* &cam, Film* &film,
 	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList)
 {
@@ -304,9 +314,10 @@ bool isDifferentColor(Vector3D actual, Vector3D nextToActual, float tolerance = 
 }
 
 
-void filterImage(Camera* &cam, Shader* &shader, Film* &firstImage,
+void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, const std::string imageName, int mode)
 {
+	
 	unsigned int sizeBar = 40;
 
 	size_t resX = firstImage->getWidth();
@@ -314,14 +325,12 @@ void filterImage(Camera* &cam, Shader* &shader, Film* &firstImage,
 
 	Film* film = new Film(resX, resY);
 
+	double nFilterRays = 2.0;
 	int filterRadius = 1;
 	int differentPixels = 0;
 	int filterStrictness = 2;
-	//double cosinusOfDifference = 0.3;
-	float tolerance = 0.08; // Max value ~= 1.73
-
-	Vector3D finalColor;
-
+	float tolerance = 0.81; // Max value ~= 0.81 - Min value ~= 0.032
+	
 
 	for (size_t lin = 0; lin < resY; lin++)
 	{
@@ -338,10 +347,7 @@ void filterImage(Camera* &cam, Shader* &shader, Film* &firstImage,
 					for (int y = lin - filterRadius; y <= lin + filterRadius; y++) {
 
 						if (x >= 0 && x < resX && y >= 0 && y < resY) {
-							//double cosinus = dot(firstImage[col][lin], firstImage[x][y]); //No es un buen indicador, hay que cambiar
-
 							if (!isDifferentColor(firstImage->getPixelValue(col, lin), firstImage->getPixelValue(x, y), tolerance)) continue;
-
 							differentPixels++;
 
 						}
@@ -350,26 +356,117 @@ void filterImage(Camera* &cam, Shader* &shader, Film* &firstImage,
 			}
 			Vector3D finalColor(0, 0, 0);
 			if (mode == 1) {
-				if (differentPixels > 0) finalColor = Vector3D(1.0, 1.0, 1.0);
+				if (differentPixels > 0) finalColor = Vector3D(0.0, 1.0, 1.0);
 				else finalColor = firstImage->getPixelValue(col, lin);
 			}
 			else {
 				if (differentPixels > filterStrictness || mode == 0) {
 
-					for (double y = 0.25; y < 1; y += 0.5) {
-						for (double x = 0.25; x < 1; x += 0.5) {
+					for (double y = 1 / (nFilterRays + 1); y < 1; y += 1 / (nFilterRays + 1)) {
+						for (double x = 1 / (nFilterRays + 1); x < 1; x += 1 / (nFilterRays + 1)) {
 							Ray cameraRay = cam->generateRay((col + x) / resX, (lin + y) / resY);
 
 							// Compute ray color according to the used shader
 							finalColor += shader->computeColor(cameraRay, *objectsList, *lightSourceList);
 						}
 					}
-					finalColor /= 4; //4, number of rays
+					finalColor /= pow(nFilterRays,2); //number of rays
 				}
 				else finalColor = firstImage->getPixelValue(col, lin);
 			}
 			film->setPixelValue(col, lin, finalColor);
 			differentPixels = 0;
+		}
+	}
+
+	film->save(("./" + imageName + ".bmp").c_str());
+}
+
+
+void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
+	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, const std::string imageName )
+{
+	unsigned int sizeBar = 40;
+
+	size_t resX = firstImage->getWidth();
+	size_t resY = firstImage->getHeight();
+
+	Film* film = new Film(resX, resY);
+
+	int filterRadius = 1;
+	int differentPixels = 0;
+	int filterStrictness = 2;
+	float tolerance = 0.08; // Max value ~= 1.73
+	
+	for (size_t lin = 0; lin < resY; lin++)
+	{
+		// Show progression
+		if (lin % (resY / sizeBar) == 0)
+			std::cout << ".";
+
+		for (size_t col = 0; col < resX; col++)
+		{
+
+			//For para recorrer los pixeles colindantes
+			for (int x = col - filterRadius; x <= col + filterRadius; x++) {
+				for (int y = lin - filterRadius; y <= lin + filterRadius; y++) {
+
+					if (x >= 0 && x < resX && y >= 0 && y < resY) {
+						if (!isDifferentColor(firstImage->getPixelValue(col, lin), firstImage->getPixelValue(x, y), tolerance)) continue;
+						differentPixels++;
+					}
+				}
+			}		
+
+			if (differentPixels > filterStrictness) {
+
+				for (double y = 0; y <= 1; y++) {
+					for (double x = 0; x <= 1; x++) {
+						if (rays[(int)(col + x)][(int)(lin + y)].thrown) continue;
+						Ray cameraRay = cam->generateRay((col + x) / resX, (lin + y) / resY);
+
+						// Compute ray color according to the used shader
+						rays[(int)(col + x)][(int)(lin + y)].color = shader->computeColor(cameraRay, *objectsList, *lightSourceList);
+						rays[(int)(col + x)][(int)(lin + y)].thrown = true;
+					}
+				}
+			}
+			//else finalColor = firstImage->getPixelValue(col, lin);
+			
+			//film->setPixelValue(col, lin, finalColor);
+			differentPixels = 0;
+		}
+	}
+
+	float percentage = 0;
+	int numRays = 0;
+	for (size_t lin = 0; lin < resY; lin++)
+	{
+		// Show progression
+		if (lin % (resY / sizeBar) == 0)
+			std::cout << ".";
+
+		for (size_t col = 0; col < resX; col++)
+		{	
+			percentage = 0.0;
+			Vector3D finalColor(0, 0, 0);
+			for (double y = 0; y <= 1; y++) {
+				for (double x = 0; x <= 1; x++) {
+					if (!rays[(int)(col + x)][(int)(lin + y)].thrown) continue;
+
+					finalColor += rays[(int)(col + x)][(int)(lin + y)].color;
+					percentage += 0.04;
+					numRays++;
+				}
+			}
+			if (numRays > 0)
+				finalColor /= numRays;
+
+			percentage *= numRays;
+			finalColor = (finalColor*percentage) + firstImage->getPixelValue(col, lin)*(1 - percentage);
+			film->setPixelValue(col, lin, finalColor);
+			percentage = 0;
+			numRays = 0;
 		}
 	}
 
@@ -416,12 +513,6 @@ void createBaseImage(Camera* &cam, Shader* &shader, Film* &firstImage,
 	std::cout << "\nFirst image complete. Computing anti-aliasing filters..." << std::endl;
 }
 
-void raytraceProject(Camera* &cam, Shader* &shader, Film* &originalImage,
-	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList)
-{
-
-	
-}
 
 int main()
 {
@@ -432,7 +523,7 @@ int main()
     // Create an empty film
     Film *originalImage;
     //film = new Film(720, 576);
-	originalImage = new Film(300,300);
+	originalImage = new Film(IMAGE_WIDTH, IMAGE_HEIGHT);
 
     // Declare the shader
     Vector3D bgColor(0.0, 0.0, 0.0); // Background color (for rays which do not intersect anything)
@@ -466,19 +557,21 @@ int main()
 	std::cout << "\nOriginal image compute time: " << baseImageTime << std::endl;
 
 	begin_time = clock();
-	filterImage(cam, shader, originalImage, objectsList, lightSourceList, "1-AllFiltered", 0);
+	imageFilter(cam, shader, originalImage, objectsList, lightSourceList, "1-AllFiltered", 0);
 	std::cout << "\nAllFiltered image compute time: " << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 
 	begin_time = clock();
-	filterImage(cam, shader, originalImage, objectsList, lightSourceList, "2-PixelsToFilter", 1);
+	imageFilter(cam, shader, originalImage, objectsList, lightSourceList, "2-PixelsToFilter", 1);
 	std::cout << "\nPixelsToFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
 
 	begin_time = clock();
-	filterImage(cam, shader, originalImage, objectsList, lightSourceList, "3-DefaultFilter", 2);
+	imageFilter(cam, shader, originalImage, objectsList, lightSourceList, "3-DefaultFilter", 2);
 	std::cout << "\nDefaultFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
-
-	//filterImage(cam, shader, originalImage, objectsList, lightSourceList, "4-OurFilter", 3);
 	
+	begin_time = clock();
+	ourImageFilter(cam, shader, originalImage, objectsList, lightSourceList, "4-OurFilter");
+	std::cout << "\OurFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
+
     // Save the final result to file
     //std::cout << "\n\nSaving the result to file output.bmp\n" << std::endl;
 	//originalImage->save("./Project.bmp");
