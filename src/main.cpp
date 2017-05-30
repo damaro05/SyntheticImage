@@ -2,6 +2,7 @@
 #include <stdlib.h> /* srand, rand */
 #include <vector>
 #include <algorithm>
+#include <ctime>
 
 #include "core/film.h"
 #include "core/matrix4x4.h"
@@ -297,20 +298,28 @@ void buildSceneProject(Camera* &cam, Film* &film,
 /* Project code */
 /* ************ */
 
-void fourRaysFilter(Camera* &cam, Shader* &shader, Film* &film,
-	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, std::vector <std::vector <Vector3D> > &firstImage)
-{
-	std::cout << "First image complete. Computing anti-aliasing" << std::endl;
 
+bool isDifferentColor(Vector3D actual, Vector3D nextToActual, float tolerance = 1.0) {
+	return (tolerance < sqrt( pow(actual.x-nextToActual.x,2) + pow(actual.y - nextToActual.y, 2) + pow(actual.z - nextToActual.z, 2)));
+}
+
+
+void filterImage(Camera* &cam, Shader* &shader, Film* &firstImage,
+	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, const std::string imageName, int mode)
+{
 	unsigned int sizeBar = 40;
 
-	size_t resX = film->getWidth();
-	size_t resY = film->getHeight();
+	size_t resX = firstImage->getWidth();
+	size_t resY = firstImage->getHeight();
+
+	Film* film = new Film(resX, resY);
 
 	int filterRadius = 1;
 	int differentPixels = 0;
-	int filterStrictness = 5;
-	double cosinusOfDifference = 0.3;
+	int filterStrictness = 2;
+	//double cosinusOfDifference = 0.3;
+	float tolerance = 0.08; // Max value ~= 1.73
+
 	Vector3D finalColor;
 
 
@@ -323,59 +332,58 @@ void fourRaysFilter(Camera* &cam, Shader* &shader, Film* &film,
 		for (size_t col = 0; col < resX; col++)
 		{
 
-			//For para recorrer los pixeles colindantes
-			for (int x = col - filterRadius; x <= col + filterRadius; x++) {
-				for (int y = lin - filterRadius; y <= lin + filterRadius; y++) {
+			if (mode > 0) {
+				//For para recorrer los pixeles colindantes
+				for (int x = col - filterRadius; x <= col + filterRadius; x++) {
+					for (int y = lin - filterRadius; y <= lin + filterRadius; y++) {
 
-					if (x >= 0 && x < resX && y >= 0 && y < resY) {
-						double cosinus = dot(firstImage[col][lin], firstImage[x][y]); //No es un buen indicador, hay que cambiar
-						if (cosinus > cosinusOfDifference) continue;
-						
-						differentPixels++;
-						
+						if (x >= 0 && x < resX && y >= 0 && y < resY) {
+							//double cosinus = dot(firstImage[col][lin], firstImage[x][y]); //No es un buen indicador, hay que cambiar
+
+							if (!isDifferentColor(firstImage->getPixelValue(col, lin), firstImage->getPixelValue(x, y), tolerance)) continue;
+
+							differentPixels++;
+
+						}
 					}
 				}
 			}
-
-			if (differentPixels > 0) finalColor = Vector3D(1.0, 1.0, 1.0);
-			else finalColor = firstImage[col][lin];
-			/*
-			if (differentPixels > filterStrictness) {
-				Vector3D finalColor(0, 0, 0);
-
-				for (double y = 0.25; y < 1; y += 0.5) {
-					for (double x = 0.25; x < 1; x += 0.5) {
-						Ray cameraRay = cam->generateRay((col + x) / resX, (lin + y) / resY);
-
-						// Compute ray color according to the used shader
-						finalColor += shader->computeColor(cameraRay, *objectsList, *lightSourceList);
-					}
-				}
-				finalColor /= 4; //4, number of rays
+			Vector3D finalColor(0, 0, 0);
+			if (mode == 1) {
+				if (differentPixels > 0) finalColor = Vector3D(1.0, 1.0, 1.0);
+				else finalColor = firstImage->getPixelValue(col, lin);
 			}
-			else finalColor = firstImage[col][lin];
-			*/
+			else {
+				if (differentPixels > filterStrictness || mode == 0) {
+
+					for (double y = 0.25; y < 1; y += 0.5) {
+						for (double x = 0.25; x < 1; x += 0.5) {
+							Ray cameraRay = cam->generateRay((col + x) / resX, (lin + y) / resY);
+
+							// Compute ray color according to the used shader
+							finalColor += shader->computeColor(cameraRay, *objectsList, *lightSourceList);
+						}
+					}
+					finalColor /= 4; //4, number of rays
+				}
+				else finalColor = firstImage->getPixelValue(col, lin);
+			}
 			film->setPixelValue(col, lin, finalColor);
 			differentPixels = 0;
 		}
 	}
+
+	film->save(("./" + imageName + ".bmp").c_str());
 }
 
 
-void raytraceProject(Camera* &cam, Shader* &shader, Film* &film,
-	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList)
-{
+void createBaseImage(Camera* &cam, Shader* &shader, Film* &firstImage,
+	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList) {
+	
 	unsigned int sizeBar = 40;
 
-	size_t resX = film->getWidth();
-	size_t resY = film->getHeight();
-
-	std::vector <std::vector <Vector3D> > firstImage;
-	firstImage.resize(resX);
-	for (size_t i = 0; i < resX; i++) {
-		firstImage[i].resize(resY);
-	}
-
+	size_t resX = firstImage->getWidth();
+	size_t resY = firstImage->getHeight();
 
 	// Main raytracing loop
 	// Out-most loop invariant: we have rendered lin lines
@@ -398,14 +406,21 @@ void raytraceProject(Camera* &cam, Shader* &shader, Film* &film,
 
 			// Compute ray color according to the used shader
 			Vector3D pixelColor = shader->computeColor(cameraRay, *objectsList, *lightSourceList);
-			
+
 			// Store the pixel color
 			//film->setPixelValue(col, lin, pixelColor);
-			firstImage[col][lin] = pixelColor;
+			firstImage->setPixelValue(col, lin, pixelColor);
 		}
 	}
+	firstImage->save("./0-Original.bmp");
+	std::cout << "\nFirst image complete. Computing anti-aliasing filters..." << std::endl;
+}
 
-	fourRaysFilter(cam, shader, film, objectsList, lightSourceList, firstImage);
+void raytraceProject(Camera* &cam, Shader* &shader, Film* &originalImage,
+	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList)
+{
+
+	
 }
 
 int main()
@@ -415,10 +430,9 @@ int main()
     std::cout << separator << "RTIS - Ray Tracer for \"Imatge Sintetica\"" << separator << std::endl;
 
     // Create an empty film
-    Film *film;
+    Film *originalImage;
     //film = new Film(720, 576);
-	film = new Film(300,300);
-
+	originalImage = new Film(300,300);
 
     // Declare the shader
     Vector3D bgColor(0.0, 0.0, 0.0); // Background color (for rays which do not intersect anything)
@@ -439,15 +453,35 @@ int main()
     // Build the scene
     //buildSceneSphere(cam, film, objectsList, lightSourceList);
 	//buildSceneCornellBox(cam, film, objectsList, lightSourceList);
-	buildSceneProject(cam, film, objectsList, lightSourceList);
+	buildSceneProject(cam, originalImage, objectsList, lightSourceList);
 
     // Launch some rays!
     //raytrace(cam, shader, film, objectsList, lightSourceList);
-	raytraceProject(cam, shader, film, objectsList, lightSourceList);
+	//Film* originalImage = new Film(film->getWidth(), film->getHeight());
+	
+	clock_t begin_time = clock();
+	createBaseImage(cam, shader, originalImage, objectsList, lightSourceList);
+	float baseImageTime = float(clock() - begin_time) / CLOCKS_PER_SEC;
+	
+	std::cout << "\nOriginal image compute time: " << baseImageTime << std::endl;
 
+	begin_time = clock();
+	filterImage(cam, shader, originalImage, objectsList, lightSourceList, "1-AllFiltered", 0);
+	std::cout << "\nAllFiltered image compute time: " << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
+
+	begin_time = clock();
+	filterImage(cam, shader, originalImage, objectsList, lightSourceList, "2-PixelsToFilter", 1);
+	std::cout << "\nPixelsToFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
+
+	begin_time = clock();
+	filterImage(cam, shader, originalImage, objectsList, lightSourceList, "3-DefaultFilter", 2);
+	std::cout << "\nDefaultFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
+
+	//filterImage(cam, shader, originalImage, objectsList, lightSourceList, "4-OurFilter", 3);
+	
     // Save the final result to file
-    std::cout << "\n\nSaving the result to file output.bmp\n" << std::endl;
-    film->save("./Project.bmp");
+    //std::cout << "\n\nSaving the result to file output.bmp\n" << std::endl;
+	//originalImage->save("./Project.bmp");
 
     std::cout << "\n\n" << std::endl;
     return 0;
