@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <ctime>
+#include <algorithm>
 
 #include "core/film.h"
 #include "core/matrix4x4.h"
@@ -33,6 +34,7 @@ struct rayInfo {
 };
 
 rayInfo rays[IMAGE_WIDTH+1][IMAGE_HEIGHT+1];
+
 
 void buildSceneCornellBox(Camera* &cam, Film* &film,
 	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList)
@@ -327,9 +329,7 @@ void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 
 	double nFilterRays = 2.0;
 	int filterRadius = 1;
-	int differentPixels = 0;
-	int filterStrictness = 2;
-	float tolerance = 0.81; // Max value ~= 0.81 - Min value ~= 0.032
+	float tolerance = 0.01; // Max value ~= 0.81 - Min value ~= 0.032
 	
 
 	for (size_t lin = 0; lin < resY; lin++)
@@ -340,27 +340,45 @@ void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 
 		for (size_t col = 0; col < resX; col++)
 		{
-
+			Vector3D averageColor = Vector3D(0.0, 0.0, 0.0);
 			if (mode > 0) {
 				//For para recorrer los pixeles colindantes
-				for (int x = col - filterRadius; x <= col + filterRadius; x++) {
-					for (int y = lin - filterRadius; y <= lin + filterRadius; y++) {
+				double numPixels = 0.0;
+				
+				for (int x = -filterRadius; x <= filterRadius; x++) {
+					for (int y = -filterRadius; y <= filterRadius; y++) {
 
-						if (x >= 0 && x < resX && y >= 0 && y < resY) {
-							if (!isDifferentColor(firstImage->getPixelValue(col, lin), firstImage->getPixelValue(x, y), tolerance)) continue;
-							differentPixels++;
+						
+						if ((col + x)>= 0 && (col + x) < resX && (y + lin) >= 0 && (y + lin) < resY) {
+							if (x == y) continue;
+							Vector3D actualColor;
+							if (firstImage->getPixelValue(x + col, y + lin).length() > sqrt(3))
+								actualColor = Vector3D(1.0, 1.0, 1.0);
+							else actualColor = firstImage->getPixelValue(x + col, y + lin);
+							averageColor += actualColor;
+							numPixels++;
+
 
 						}
 					}
 				}
+				
+				averageColor /= numPixels;
+				// differentPixels += 3;
+				
 			}
 			Vector3D finalColor(0, 0, 0);
+			Vector3D myPixelColor;
+			if (firstImage->getPixelValue(col,lin).length() > sqrt(3))
+				myPixelColor = Vector3D(1.0, 1.0, 1.0);
+			else myPixelColor = firstImage->getPixelValue(col, lin);
+
 			if (mode == 1) {
-				if (differentPixels > 0) finalColor = Vector3D(0.0, 1.0, 1.0);
+				if (isDifferentColor(myPixelColor, averageColor, tolerance)) finalColor = Vector3D(0.0, 1.0, 1.0);
 				else finalColor = firstImage->getPixelValue(col, lin);
 			}
 			else {
-				if (differentPixels > filterStrictness || mode == 0) {
+				if (isDifferentColor(myPixelColor, averageColor, tolerance) || mode == 0) {
 
 					for (double y = 1 / (nFilterRays + 1); y < 1; y += 1 / (nFilterRays + 1)) {
 						for (double x = 1 / (nFilterRays + 1); x < 1; x += 1 / (nFilterRays + 1)) {
@@ -375,7 +393,6 @@ void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 				else finalColor = firstImage->getPixelValue(col, lin);
 			}
 			film->setPixelValue(col, lin, finalColor);
-			differentPixels = 0;
 		}
 	}
 
@@ -387,6 +404,7 @@ void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, const std::string imageName )
 {
 	unsigned int sizeBar = 40;
+	bool recomputePixel[IMAGE_WIDTH + 1][IMAGE_HEIGHT + 1];
 
 	size_t resX = firstImage->getWidth();
 	size_t resY = firstImage->getHeight();
@@ -406,20 +424,35 @@ void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 
 		for (size_t col = 0; col < resX; col++)
 		{
-
+			Vector3D averageColor = Vector3D(0.0, 0.0, 0.0);
+			double numPixels = 0.0;
 			//For para recorrer los pixeles colindantes
-			for (int x = col - filterRadius; x <= col + filterRadius; x++) {
-				for (int y = lin - filterRadius; y <= lin + filterRadius; y++) {
+			for (int x = -filterRadius; x <= filterRadius; x++) {
+				for (int y = -filterRadius; y <= filterRadius; y++) {
 
-					if (x >= 0 && x < resX && y >= 0 && y < resY) {
-						if (!isDifferentColor(firstImage->getPixelValue(col, lin), firstImage->getPixelValue(x, y), tolerance)) continue;
-						differentPixels++;
+
+					if ((col + x) >= 0 && (col + x) < resX && (y + lin) >= 0 && (y + lin) < resY) {
+						if (x == y) continue;
+						Vector3D actualColor;
+						if (firstImage->getPixelValue(x + col, y + lin).length() > sqrt(3))
+							actualColor = Vector3D(1.0, 1.0, 1.0);
+						else actualColor = firstImage->getPixelValue(x + col, y + lin);
+						averageColor += actualColor;
+						numPixels++;
+
+
 					}
 				}
-			}		
+			}
 
-			if (differentPixels > filterStrictness) {
+			averageColor /= numPixels;
+			Vector3D myPixelColor;
+			if (firstImage->getPixelValue(col, lin).length() > sqrt(3))
+				myPixelColor = Vector3D(1.0, 1.0, 1.0);
+			else myPixelColor = firstImage->getPixelValue(col, lin);
 
+			if (isDifferentColor(myPixelColor, averageColor, tolerance)) {
+				recomputePixel[col][lin] = true;
 				for (double y = 0; y <= 1; y++) {
 					for (double x = 0; x <= 1; x++) {
 						if (rays[(int)(col + x)][(int)(lin + y)].thrown) continue;
@@ -431,10 +464,10 @@ void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 					}
 				}
 			}
+			else recomputePixel[col][lin] = false;
 			//else finalColor = firstImage->getPixelValue(col, lin);
 			
 			//film->setPixelValue(col, lin, finalColor);
-			differentPixels = 0;
 		}
 	}
 
@@ -447,26 +480,32 @@ void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 			std::cout << ".";
 
 		for (size_t col = 0; col < resX; col++)
-		{	
-			percentage = 0.0;
+		{
 			Vector3D finalColor(0, 0, 0);
-			for (double y = 0; y <= 1; y++) {
-				for (double x = 0; x <= 1; x++) {
-					if (!rays[(int)(col + x)][(int)(lin + y)].thrown) continue;
+			if (recomputePixel[col][lin]) {
+				percentage = 0.0;
+				
 
-					finalColor += rays[(int)(col + x)][(int)(lin + y)].color;
-					percentage += 0.04;
-					numRays++;
+				for (double y = 0; y <= 1; y++) {
+					for (double x = 0; x <= 1; x++) {
+						//if (!rays[(int)(col + x)][(int)(lin + y)].thrown) continue;
+
+						finalColor += rays[(int)(col + x)][(int)(lin + y)].color;
+						percentage += 0.04;
+						numRays++;
+					}
 				}
-			}
-			if (numRays > 0)
-				finalColor /= numRays;
+				if (numRays > 0)
+					finalColor /= numRays;
 
-			percentage *= numRays;
-			finalColor = (finalColor*percentage) + firstImage->getPixelValue(col, lin)*(1 - percentage);
+				percentage *= numRays;
+				finalColor = (finalColor*percentage) + firstImage->getPixelValue(col, lin)*(1 - percentage);
+				percentage = 0;
+				numRays = 0;
+			}
+			else finalColor = firstImage->getPixelValue(col, lin);
+
 			film->setPixelValue(col, lin, finalColor);
-			percentage = 0;
-			numRays = 0;
 		}
 	}
 
