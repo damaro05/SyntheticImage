@@ -595,21 +595,28 @@ int main()
 	
 	std::cout << "\nOriginal image compute time: " << baseImageTime << std::endl;
 
+	std::cout << Ray::rayCounter << std::endl;
+	Ray::resetCounter();
 	begin_time = clock();
 	imageFilter(cam, shader, originalImage, objectsList, lightSourceList, "1-AllFiltered", 0);
 	std::cout << "\nAllFiltered image compute time: " << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
+	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
 
 	begin_time = clock();
 	imageFilter(cam, shader, originalImage, objectsList, lightSourceList, "2-PixelsToFilter", 1);
 	std::cout << "\nPixelsToFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
 
+	Ray::resetCounter();
 	begin_time = clock();
 	imageFilter(cam, shader, originalImage, objectsList, lightSourceList, "3-DefaultFilter", 2);
 	std::cout << "\nDefaultFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
-	
+	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
+
+	Ray::resetCounter();
 	begin_time = clock();
 	ourImageFilter(cam, shader, originalImage, objectsList, lightSourceList, "4-OurFilter");
 	std::cout << "\OurFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
+	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
 
     // Save the final result to file
     //std::cout << "\n\nSaving the result to file output.bmp\n" << std::endl;

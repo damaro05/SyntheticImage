@@ -27,6 +27,10 @@ public:
     mutable double minT; //
     mutable double maxT; //
     size_t depth;        // Ray depth (or number of bounces)
+
+	static int rayCounter;
+
+	static void resetCounter();
 };
 
 std::ostream &operator<<(std::ostream &out, const Ray &r);
