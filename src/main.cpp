@@ -316,7 +316,7 @@ bool isDifferentColor(Vector3D actual, Vector3D nextToActual, float tolerance = 
 }
 
 
-void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
+void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &film,
 	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, const std::string imageName, int mode)
 {
 	
@@ -325,9 +325,9 @@ void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 	size_t resX = firstImage->getWidth();
 	size_t resY = firstImage->getHeight();
 
-	Film* film = new Film(resX, resY);
+	film = new Film(resX, resY);
 
-	double nFilterRays = 2.0;
+	double nFilterRays = 10.0;
 	int filterRadius = 1;
 	float tolerance = 0.01; // Max value ~= 0.81 - Min value ~= 0.032
 	
@@ -400,7 +400,7 @@ void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 }
 
 
-void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
+void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &film,
 	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, const std::string imageName )
 {
 	unsigned int sizeBar = 40;
@@ -409,7 +409,7 @@ void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage,
 	size_t resX = firstImage->getWidth();
 	size_t resY = firstImage->getHeight();
 
-	Film* film = new Film(resX, resY);
+	film = new Film(resX, resY);
 
 	int filterRadius = 1;
 	int differentPixels = 0;
@@ -552,6 +552,34 @@ void createBaseImage(Camera* &cam, Shader* &shader, Film* &firstImage,
 	std::cout << "\nFirst image complete. Computing anti-aliasing filters..." << std::endl;
 }
 
+double computePixelDifference(Film* &image1, Film* &image2) {
+	double error = 0.0;
+
+	size_t resX = image1->getWidth();
+	size_t resY = image1->getHeight();
+
+	for (size_t lin = 0; lin < resY; lin++)
+	{
+		for (size_t col = 0; col < resX; col++)
+		{
+			Vector3D pixelColor1 = image1->getPixelValue(col, lin);
+			Vector3D pixelColor2 = image2->getPixelValue(col, lin);
+
+			pixelColor1.x = (std::min(pixelColor1.x, 1.0));
+			pixelColor1.y = (std::min(pixelColor1.y, 1.0));
+			pixelColor1.z = (std::min(pixelColor1.z, 1.0));
+			pixelColor2.x = (std::min(pixelColor2.x, 1.0));
+			pixelColor2.y = (std::min(pixelColor2.y, 1.0));
+			pixelColor2.z = (std::min(pixelColor2.z, 1.0));
+
+			double difference = pixelColor1.lengthSq() - pixelColor2.lengthSq();
+			error += difference;
+
+		}
+	}
+	error /= (resX*resY);
+	return sqrt(error)*100;
+}
 
 int main()
 {
@@ -597,26 +625,34 @@ int main()
 
 	std::cout << Ray::rayCounter << std::endl;
 	Ray::resetCounter();
+
+	Film* allFiltered;
 	begin_time = clock();
-	imageFilter(cam, shader, originalImage, objectsList, lightSourceList, "1-AllFiltered", 0);
+	imageFilter(cam, shader, originalImage, allFiltered, objectsList, lightSourceList, "1-AllFiltered", 0);
 	std::cout << "\nAllFiltered image compute time: " << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
 
+	Film* pixelsToFilter;
 	begin_time = clock();
-	imageFilter(cam, shader, originalImage, objectsList, lightSourceList, "2-PixelsToFilter", 1);
+	imageFilter(cam, shader, originalImage, pixelsToFilter, objectsList, lightSourceList, "2-PixelsToFilter", 1);
 	std::cout << "\nPixelsToFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
 
+	Film* defaultFilter;
 	Ray::resetCounter();
 	begin_time = clock();
-	imageFilter(cam, shader, originalImage, objectsList, lightSourceList, "3-DefaultFilter", 2);
+	imageFilter(cam, shader, originalImage, defaultFilter,objectsList, lightSourceList, "3-DefaultFilter", 2);
 	std::cout << "\nDefaultFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
 	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
 
+	Film* ourFilter;
 	Ray::resetCounter();
 	begin_time = clock();
-	ourImageFilter(cam, shader, originalImage, objectsList, lightSourceList, "4-OurFilter");
+	ourImageFilter(cam, shader, originalImage, ourFilter, objectsList, lightSourceList, "4-OurFilter");
 	std::cout << "\OurFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
 	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
+
+	std::cout << "Difference between AllFiltered and DefaultFilter " << computePixelDifference(allFiltered, defaultFilter) << "%" << std::endl;
+	std::cout << "Difference between AllFiltered and OurFilter " << computePixelDifference(allFiltered, ourFilter) << "%" << std::endl;
 
     // Save the final result to file
     //std::cout << "\n\nSaving the result to file output.bmp\n" << std::endl;
