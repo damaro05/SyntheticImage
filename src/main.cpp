@@ -25,8 +25,8 @@
 #include "materials/mirror.h"
 #include "materials/transmissive.h"
 
-#define IMAGE_WIDTH 300
-#define IMAGE_HEIGHT 300
+#define IMAGE_WIDTH 720
+#define IMAGE_HEIGHT 576
 
 struct rayInfo {
 	bool thrown = false;
@@ -327,7 +327,8 @@ void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &film,
 
 	film = new Film(resX, resY);
 
-	double nFilterRays = 10.0;
+	double nFilterRays = 2.0;
+	double nRaysAllFiltered = 10.0;
 	int filterRadius = 1;
 	float tolerance = 0.01; // Max value ~= 0.81 - Min value ~= 0.032
 	
@@ -379,7 +380,7 @@ void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &film,
 			}
 			else {
 				if (isDifferentColor(myPixelColor, averageColor, tolerance) || mode == 0) {
-
+					if (mode == 0) nFilterRays = nRaysAllFiltered;
 					for (double y = 1 / (nFilterRays + 1); y < 1; y += 1 / (nFilterRays + 1)) {
 						for (double x = 1 / (nFilterRays + 1); x < 1; x += 1 / (nFilterRays + 1)) {
 							Ray cameraRay = cam->generateRay((col + x) / resX, (lin + y) / resY);
@@ -412,9 +413,7 @@ void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &fil
 	film = new Film(resX, resY);
 
 	int filterRadius = 1;
-	int differentPixels = 0;
-	int filterStrictness = 2;
-	float tolerance = 0.08; // Max value ~= 1.73
+	float tolerance = 0.01; // Max value ~= 1.73
 	
 	for (size_t lin = 0; lin < resY; lin++)
 	{
@@ -429,8 +428,6 @@ void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &fil
 			//For para recorrer los pixeles colindantes
 			for (int x = -filterRadius; x <= filterRadius; x++) {
 				for (int y = -filterRadius; y <= filterRadius; y++) {
-
-
 					if ((col + x) >= 0 && (col + x) < resX && (y + lin) >= 0 && (y + lin) < resY) {
 						if (x == y) continue;
 						Vector3D actualColor;
@@ -439,8 +436,6 @@ void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &fil
 						else actualColor = firstImage->getPixelValue(x + col, y + lin);
 						averageColor += actualColor;
 						numPixels++;
-
-
 					}
 				}
 			}
@@ -572,7 +567,7 @@ double computePixelDifference(Film* &image1, Film* &image2) {
 			pixelColor2.y = (std::min(pixelColor2.y, 1.0));
 			pixelColor2.z = (std::min(pixelColor2.z, 1.0));
 
-			double difference = pixelColor1.lengthSq() - pixelColor2.lengthSq();
+			double difference = abs(pixelColor1.lengthSq() - pixelColor2.lengthSq());
 			error += difference;
 
 		}
@@ -610,8 +605,8 @@ int main()
 
     // Build the scene
     //buildSceneSphere(cam, film, objectsList, lightSourceList);
-	//buildSceneCornellBox(cam, film, objectsList, lightSourceList);
-	buildSceneProject(cam, originalImage, objectsList, lightSourceList);
+	buildSceneCornellBox(cam, originalImage, objectsList, lightSourceList);
+	//buildSceneProject(cam, originalImage, objectsList, lightSourceList);
 
     // Launch some rays!
     //raytrace(cam, shader, film, objectsList, lightSourceList);
@@ -648,7 +643,7 @@ int main()
 	Ray::resetCounter();
 	begin_time = clock();
 	ourImageFilter(cam, shader, originalImage, ourFilter, objectsList, lightSourceList, "4-OurFilter");
-	std::cout << "\OurFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
+	std::cout << "\nOurFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
 	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
 
 	std::cout << "Difference between AllFiltered and DefaultFilter " << computePixelDifference(allFiltered, defaultFilter) << "%" << std::endl;
