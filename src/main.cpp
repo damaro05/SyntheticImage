@@ -316,7 +316,7 @@ bool isDifferentColor(Vector3D actual, Vector3D nextToActual, float tolerance = 
 }
 
 
-void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &film,
+void regularOverSampling(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &film,
 	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, const std::string imageName, int mode)
 {
 	
@@ -401,7 +401,7 @@ void imageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &film,
 }
 
 
-void ourImageFilter(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &film,
+void cornerOverSampling(Camera* &cam, Shader* &shader, Film* &firstImage, Film* &film,
 	std::vector<Shape*>* &objectsList, std::vector<PointLightSource>* &lightSourceList, const std::string imageName )
 {
 	unsigned int sizeBar = 40;
@@ -623,31 +623,31 @@ int main()
 
 	Film* allFiltered;
 	begin_time = clock();
-	imageFilter(cam, shader, originalImage, allFiltered, objectsList, lightSourceList, "1-AllFiltered", 0);
-	std::cout << "\nAllFiltered image compute time: " << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
+	regularOverSampling(cam, shader, originalImage, allFiltered, objectsList, lightSourceList, "1-AllFiltered", 0);
+	std::cout << "\nAll oversampled image compute time: " << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
 
 	Film* pixelsToFilter;
 	begin_time = clock();
-	imageFilter(cam, shader, originalImage, pixelsToFilter, objectsList, lightSourceList, "2-PixelsToFilter", 1);
-	std::cout << "\nPixelsToFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
+	regularOverSampling(cam, shader, originalImage, pixelsToFilter, objectsList, lightSourceList, "2-PixelsToFilter", 1);
+	std::cout << "\nRegular oversampling image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
 
 	Film* defaultFilter;
 	Ray::resetCounter();
 	begin_time = clock();
-	imageFilter(cam, shader, originalImage, defaultFilter,objectsList, lightSourceList, "3-DefaultFilter", 2);
-	std::cout << "\nDefaultFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
+	regularOverSampling(cam, shader, originalImage, defaultFilter,objectsList, lightSourceList, "3-DefaultFilter", 2);
+	std::cout << "\nRegular oversampling image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
 	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
 
 	Film* ourFilter;
 	Ray::resetCounter();
 	begin_time = clock();
-	ourImageFilter(cam, shader, originalImage, ourFilter, objectsList, lightSourceList, "4-OurFilter");
-	std::cout << "\nOurFilter image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
+	cornerOverSampling(cam, shader, originalImage, ourFilter, objectsList, lightSourceList, "4-OurFilter");
+	std::cout << "\nCorner image compute time: " << (baseImageTime + float(clock() - begin_time) / CLOCKS_PER_SEC) << std::endl;
 	std::cout << "Number of thrown rays: " << Ray::rayCounter << std::endl;
 
-	std::cout << "Difference between AllFiltered and DefaultFilter " << computePixelDifference(allFiltered, defaultFilter) << "%" << std::endl;
-	std::cout << "Difference between AllFiltered and OurFilter " << computePixelDifference(allFiltered, ourFilter) << "%" << std::endl;
+	std::cout << "Difference between All oversampled and Regular " << computePixelDifference(allFiltered, defaultFilter) << "%" << std::endl;
+	std::cout << "Difference between All oversampled and Corner " << computePixelDifference(allFiltered, ourFilter) << "%" << std::endl;
 
     // Save the final result to file
     //std::cout << "\n\nSaving the result to file output.bmp\n" << std::endl;
